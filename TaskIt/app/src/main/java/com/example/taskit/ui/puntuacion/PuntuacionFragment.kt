@@ -32,6 +32,7 @@ import kotlin.random.Random.Default.nextInt
 
 class PuntuacionFragment : Fragment() {
     lateinit var completadas: ArrayList<Tareas>
+    var total:Long =0
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -77,8 +78,8 @@ class PuntuacionFragment : Fragment() {
                         puntos += e.puntuacion.toInt()
                     }
                 }
-                setProgress(puntos)
-                cargarLista()
+                getTotal(fecha,puntos)
+
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
@@ -88,10 +89,26 @@ class PuntuacionFragment : Fragment() {
         })
 
     }
+    fun getTotal(fecha: String,puntos: Int){
+        val database:FirebaseDatabase = FirebaseDatabase.getInstance("https://taskit-e835d-default-rtdb.europe-west1.firebasedatabase.app/")
+        val myRef = database.getReference(FirebaseAuth.getInstance().currentUser?.uid+"").child("completadas")
+            .child(fecha).child("total")
+        myRef.addListenerForSingleValueEvent(object : ValueEventListener{
+            override fun onCancelled(error: DatabaseError) {
+            }
+
+            override fun onDataChange(snapshot: DataSnapshot) {
+                total = snapshot.value as Long
+                setProgress(puntos)
+                cargarLista()
+            }
+
+        })
+    }
     fun setProgress(puntos:Int){
-        textViewMax.text = "100% - "+(activity as MainActivity?)?.total?.toInt().toString()!!+" -"
-        vertical_progressbar.max= (activity as MainActivity?)?.total?.toInt()!!
-        textViewMiddle.text = "50% -"+((activity as MainActivity?)?.total?.toInt()?.div(2)).toString()!!+" -"
+        textViewMax.text = "100% - "+total+" -"
+        vertical_progressbar.max= total.toInt()
+        textViewMiddle.text = "50% -"+total.div(2)+" -"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             vertical_progressbar.setProgress(puntos,true)
         } else{
